@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build StoryForge Android Beta
 on:
   workflow_dispatch:
   push:
@@ -11,17 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore MainActivity.java
+      - name: Restore formal source
         shell: bash
         run: |
-          mkdir -p app/src/main/java/com/storyforge/rpg
-          cat build/v32.part00 build/v32.part01 build/v32.part02 build/v32.part03 > build/MainActivity.full.b64
-          base64 --decode build/MainActivity.full.b64 | gunzip > app/src/main/java/com/storyforge/rpg/MainActivity.java
-          test -s app/src/main/java/com/storyforge/rpg/MainActivity.java
-          grep -q "Free Edition" app/src/main/java/com/storyforge/rpg/MainActivity.java
-          grep -q "Gemini Free（推薦）" app/src/main/java/com/storyforge/rpg/MainActivity.java
+          mkdir -p app/src/main/java/com/storyforge/storyai
+          cat build/formal-main.part00 build/formal-main.part01 > build/formal-main.b64
+          base64 --decode build/formal-main.b64 | gunzip > app/src/main/java/com/storyforge/storyai/MainActivity.java
+          test -s app/src/main/java/com/storyforge/storyai/MainActivity.java
+          grep -q "callGeminiText" app/src/main/java/com/storyforge/storyai/MainActivity.java
+          grep -q "callGeminiImage" app/src/main/java/com/storyforge/storyai/MainActivity.java
+          grep -q "callOpenAIText" app/src/main/java/com/storyforge/storyai/MainActivity.java
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -36,18 +37,21 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
+      - name: Build APK
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Verify APK
         shell: bash
         run: |
-          ls -lh app/build/outputs/apk/debug/app-debug.apk
-          sha256sum app/build/outputs/apk/debug/app-debug.apk
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
+          ls -lh "$APK"
+          sha256sum "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StoryForge-RPG-AI-v3.2-Free-debug
+          name: StoryForge-AI-Android-beta1
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
