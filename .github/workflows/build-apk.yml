@@ -15,9 +15,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p app/src/main/java/com/storyforge/rpg
-          base64 --decode build/MainActivity.java.gz.b64 | gunzip > app/src/main/java/com/storyforge/rpg/MainActivity.java
+          cat build/mainactivity.part00 build/mainactivity.part01 build/mainactivity.part02 build/mainactivity.part03 > build/MainActivity.full.b64
+          base64 --decode build/MainActivity.full.b64 | gunzip > app/src/main/java/com/storyforge/rpg/MainActivity.java
           test -s app/src/main/java/com/storyforge/rpg/MainActivity.java
           head -n 2 app/src/main/java/com/storyforge/rpg/MainActivity.java
+          wc -c app/src/main/java/com/storyforge/rpg/MainActivity.java
 
       - uses: actions/setup-java@v4
         with:
