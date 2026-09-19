@@ -15,11 +15,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p app/src/main/java/com/storyforge/rpg
-          cat build/mainactivity.part00 build/mainactivity.part01 > build/MainActivity.full.b64
+          cat build/v31c.part00 build/v31c.part01 build/v31c.part02 build/v31c.part03 build/v31c.part04 > build/MainActivity.full.b64
+          test "$(wc -c < build/MainActivity.full.b64)" -eq 16316
           base64 --decode build/MainActivity.full.b64 | gunzip > app/src/main/java/com/storyforge/rpg/MainActivity.java
-          test -s app/src/main/java/com/storyforge/rpg/MainActivity.java
+          test "$(wc -c < app/src/main/java/com/storyforge/rpg/MainActivity.java)" -eq 41645
           grep -q "Google Gemini" app/src/main/java/com/storyforge/rpg/MainActivity.java
-          wc -c app/src/main/java/com/storyforge/rpg/MainActivity.java
+          grep -q "Auto（OpenAI → Gemini）" app/src/main/java/com/storyforge/rpg/MainActivity.java
 
       - uses: actions/setup-java@v4
         with:
