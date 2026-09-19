@@ -11,40 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore and patch MainActivity.java
+      - name: Restore MainActivity.java
         shell: bash
         run: |
           mkdir -p app/src/main/java/com/storyforge/rpg
-          cat build/v31c.part00 build/v31c.part01 build/v31c.part02 build/v31c.part03 build/v31c.part04 > build/MainActivity.full.b64
+          cat build/v32.part00 build/v32.part01 build/v32.part02 build/v32.part03 > build/MainActivity.full.b64
           base64 --decode build/MainActivity.full.b64 | gunzip > app/src/main/java/com/storyforge/rpg/MainActivity.java
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path("app/src/main/java/com/storyforge/rpg/MainActivity.java")
-          lines=p.read_text().splitlines()
-          out=[]
-          i=0
-          while i < len(lines):
-              line=lines[i]
-              if 'presets.addView(tv("省錢：大量產文、單字查詢優先' in line:
-                  indent=line[:len(line)-len(line.lstrip())]
-                  out.append(indent+'presets.addView(tv("省錢：大量產文、單字查詢優先\\n平衡：一般小說創作建議\\n高品質：長篇設定、人物一致性優先\\n頂級：使用可選清單中的高階模型\\nAuto：OpenAI 失敗或額度不足時，自動嘗試 Gemini。",13,MUTED)); content.addView(presets);')
-                  while i < len(lines) and 'content.addView(presets);' not in lines[i]:
-                      i += 1
-                  i += 1
-                  continue
-              if 'LinearLayout diag=card(); diag.addView(tv("錯誤診斷",16,TEXT)); statusText=tv("HTTP 401：' in line:
-                  indent=line[:len(line)-len(line.lstrip())]
-                  out.append(indent+'LinearLayout diag=card(); diag.addView(tv("錯誤診斷",16,TEXT)); statusText=tv("HTTP 401：金鑰/權限問題\\nHTTP 429：額度或速率限制\\n模型不存在：切換下拉模型\\nAuto 模式會在 OpenAI 失敗後嘗試 Gemini。Local AI 入口已保留，後續接 Ollama / llama.cpp。",13,MUTED); diag.addView(statusText); content.addView(diag);')
-                  while i < len(lines) and 'content.addView(diag);' not in lines[i]:
-                      i += 1
-                  i += 1
-                  continue
-              out.append(line)
-              i += 1
-          p.write_text("\n".join(out)+"\n")
-          PY
-          grep -q "Google Gemini" app/src/main/java/com/storyforge/rpg/MainActivity.java
-          grep -q "Auto（OpenAI → Gemini）" app/src/main/java/com/storyforge/rpg/MainActivity.java
+          test -s app/src/main/java/com/storyforge/rpg/MainActivity.java
+          grep -q "Free Edition" app/src/main/java/com/storyforge/rpg/MainActivity.java
+          grep -q "Gemini Free（推薦）" app/src/main/java/com/storyforge/rpg/MainActivity.java
 
       - uses: actions/setup-java@v4
         with:
@@ -62,10 +37,7 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle :app:assembleDebug --stacktrace 2>&1 | tee build.log
+        run: gradle :app:assembleDebug --stacktrace
 
       - name: Verify APK
         shell: bash
@@ -76,6 +48,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StoryForge-RPG-AI-v3.1-debug
+          name: StoryForge-RPG-AI-v3.2-Free-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
